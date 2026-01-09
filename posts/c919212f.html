@@ -1,0 +1,234 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>No49：Linux的buffer-cache内存占用过高 | 新码农</title><meta name="author" content="Gilmty"><meta name="copyright" content="Gilmty"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="解决Linux buffer cache内存占用过高的办法。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="No49：Linux的buffer-cache内存占用过高">
+<meta property="og:url" content="https://addcoder.com/posts/c919212f">
+<meta property="og:site_name" content="新码农">
+<meta property="og:description" content="解决Linux buffer cache内存占用过高的办法。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://addcoder.com/media/covers/No49%EF%BC%9ALinux%E7%9A%84buffer-cache%E5%86%85%E5%AD%98%E5%8D%A0%E7%94%A8%E8%BF%87%E9%AB%98.jpg">
+<meta property="article:published_time" content="2021-01-09T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-01-09T16:00:00.000Z">
+<meta property="article:author" content="Gilmty">
+<meta property="article:tag" content="Linux">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://addcoder.com/media/covers/No49%EF%BC%9ALinux%E7%9A%84buffer-cache%E5%86%85%E5%AD%98%E5%8D%A0%E7%94%A8%E8%BF%87%E9%AB%98.jpg"><link rel="shortcut icon" href="/static/images/favicon.ico"><link rel="canonical" href="https://addcoder.com/posts/c919212f"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":false,"top_n_per_article":1,"unescape":true,"languages":{"hits_empty":"找不到您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"简"},
+  noticeOutdate: {"limitDay":30,"position":"top","messagePrev":"本文于","messageNext":"天之前发表，文中内容可能已经过时。"},
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: {"limitCount":500,"languages":{"author":"作者: Gilmty","link":"链接: ","source":"来源: 新码农","info":"著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。"}},
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: true,
+  islazyload: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: true,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'No49：Linux的buffer-cache内存占用过高',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: false,
+  postUpdate: '2021-01-10 00:00:00'
+}</script><script>(win=>{
+      win.saveToLocal = {
+        set: (key, value, ttl) => {
+          if (ttl === 0) return
+          const now = Date.now()
+          const expiry = now + ttl * 86400000
+          const item = {
+            value,
+            expiry
+          }
+          localStorage.setItem(key, JSON.stringify(item))
+        },
+      
+        get: key => {
+          const itemStr = localStorage.getItem(key)
+      
+          if (!itemStr) {
+            return undefined
+          }
+          const item = JSON.parse(itemStr)
+          const now = Date.now()
+      
+          if (now > item.expiry) {
+            localStorage.removeItem(key)
+            return undefined
+          }
+          return item.value
+        }
+      }
+    
+      win.getScript = (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        script.onerror = reject
+        script.onload = script.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          script.onload = script.onreadystatechange = null
+          resolve()
+        }
+
+        Object.keys(attr).forEach(key => {
+          script.setAttribute(key, attr[key])
+        })
+
+        document.head.appendChild(script)
+      })
+    
+      win.getCSS = (url, id = false) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onerror = reject
+        link.onload = link.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          link.onload = link.onreadystatechange = null
+          resolve()
+        }
+        document.head.appendChild(link)
+      })
+    
+      win.activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+        if (t === 'dark') activateDarkMode()
+        else if (t === 'light') activateLightMode()
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+      const detectApple = () => {
+        if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+          document.documentElement.classList.add('apple')
+        }
+      }
+      detectApple()
+    })(window)</script><link rel="stylesheet" href="/static/css/mystyle.css"><meta name="generator" content="Hexo 7.3.0"><link rel="alternate" href="/atom.xml" title="新码农" type="application/atom+xml">
+</head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src="/static/images/favicon.ico" onerror="onerror=null;src='/static/images/404_friend.gif'" alt="avatar"/></div><div class="sidebar-site-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">126</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">25</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">3</div></a></div><hr class="custom-hr"/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="not-top-img fixed" id="page-header"><nav id="nav"><span id="blog-info"><a href="/" title="新码农"><img class="site-icon" src="/static/images/addcoder.jpg"/><span class="site-name">新码农</span></a></span><div id="menus"><div id="search-button"><a class="site-page social-icon search" href="javascript:void(0);" rel="external nofollow noreferrer"><i class="fas fa-search fa-fw"></i><span> 搜索</span></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div></div><div id="toggle-menu"><a class="site-page" href="javascript:void(0);" rel="external nofollow noreferrer"><i class="fas fa-bars fa-fw"></i></a></div></div></nav></header><main class="layout" id="content-inner"><div id="post"><div id="post-info"><h1 class="post-title">No49：Linux的buffer-cache内存占用过高</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2021-01-09T16:00:00.000Z" title="发表于 2021-01-10 00:00:00">2021-01-10</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2021-01-09T16:00:00.000Z" title="更新于 2021-01-10 00:00:00">2021-01-10</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/">技术笔记</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">字数总计:</span><span class="word-count">1.2k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>3分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="No49：Linux的buffer-cache内存占用过高"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div><article class="post-content" id="article-container"><p>在Linux系统中，我们经常用free命令来查看系统内存的使用状态。</p>
+<p>先简要介绍一下buffers和cached是什么意思：</p>
+<ul>
+<li>什么是buffer&#x2F;cache？</li>
+</ul>
+<p>buffer和cache是两个在计算机技术中被用滥的名词，放在不通语境下会有不同的意义。</p>
+<p>在Linux的内存管理中，这里的buffer指Linux内存的：Buffer cache。这里的cache指Linux内存中的：Page cache。翻译成中文可以叫做缓冲区缓存和页面缓存。</p>
+<p>在历史上，它们一个（buffer）被用来当成对io设备写的缓存，而另一个（cache）被用来当作对io设备的读缓存，这里的io设备，主要指的是块设备文件和文件系统上的普通文件。</p>
+<p>但是现在，它们的意义已经不一样了。在当前的内核中，page cache顾名思义就是针对内存页的缓存，说白了就是，如果有内存是以page进行分配管理的，都可以使用page<br>cache作为其缓存来管理使用。</p>
+<p>当然，不是所有的内存都是以页（page）进行管理的，也有很多是针对块（block）进行管理的。</p>
+<p>这部分内存使用如果要用到cache功能，则都集中到buffer cache中来使用。（从这个角度出发，是不是buffer cache改名叫做block<br>cache更好？）</p>
+<p>然而，也不是所有块（block）都有固定长度，系统上块的长度主要是根据所使用的块设备决定的，而页长度在X86上无论是32位还是64位都是4k。</p>
+<p>明白了这两套缓存系统的区别，就可以理解它们究竟都可以用来做什么了。</p>
+<ul>
+<li>什么是page cache？</li>
+</ul>
+<p>Page cache主要用来作为文件系统上的文件数据的缓存来用，尤其是针对当进程对文件有read／write操作的时候。</p>
+<p>如果你仔细想想的话，作为可以映射文件到内存的系统调用：mmap是不是很自然的也应该用到page cache？</p>
+<p>在当前的系统实现里，page cache也被作为其它文件类型的缓存设备来用，所以事实上page cache也负责了大部分的块设备文件的缓存工作。</p>
+<ul>
+<li>什么是buffer cache</li>
+</ul>
+<p>Buffer cache则主要是设计用来在系统对块设备进行读写的时候，对块进行数据缓存的系统来使用。</p>
+<p>这意味着某些对块的操作会使用buffer cache进行缓存，比如我们在格式化文件系统的时候。一般情况下两个缓存系统是一起配合使用的。</p>
+<p>比如当我们对一个文件进行写操作的时候，page cache的内容会被改变，而buffer cache则可以用来将page标记为不同的缓冲区，并记录是哪一个缓冲区被修改了。</p>
+<p>这样，内核在后续执行脏数据的回写（writeback）时，就不用将整个page写回，而只需要写回修改的部分即可。</p>
+<ul>
+<li>如何回收cache？</li>
+</ul>
+<p>Linux内核会在内存将要耗尽的时候，触发内存回收的工作，以便释放出内存给急需内存的进程使用。一般情况下，这个操作中主要的内存释放都来自于对buffer／cache的释放。</p>
+<p>尤其是被使用更多的cache空间。既然它主要用来做缓存，只是在内存够用的时候加快进程对文件的读写速度，那么在内存压力较大的情况下，当然有必要清空释放cache，作为free空间分给相关进程使用。所以一般情况下，我们认为buffer&#x2F;cache空间可以被释放，这个理解是正确的。</p>
+<p>但是这种清缓存的工作也并不是没有成本。理解cache是干什么的就可以明白清缓存必须保证cache中的数据跟对应文件中的数据一致，才能对cache进行释放。所以伴随着cache清除的行为的，一般都是系统IO飙高。因为内核要对比cache中的数据和对应硬盘文件上的数据是否一致，如果不一致需要写回，之后才能回收。</p>
+<p>在系统中除了内存将被耗尽的时候可以清缓存以外，我们还可以使用下面这个文件来人工触发缓存清除的操作：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">cat /proc/sys/vm/drop_caches</span><br></pre></td></tr></table></figure>
+
+<p>当然，这个文件可以设置的值分别为1、2、3。它们所表示的含义为：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">1表示清除pagecache。</span></span><br><span class="line">echo 1 &gt; /proc/sys/vm/drop_caches</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">2表示清除回收slab分配器中的对象（包括目录项缓存和inode缓存）。</span></span><br><span class="line">echo 2 &gt; /proc/sys/vm/drop_caches</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">3表示清除pagecache和slab分配器中的缓存对象。</span></span><br><span class="line">echo 3 &gt; /proc/sys/vm/drop_caches</span><br></pre></td></tr></table></figure>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://addcoder.com">Gilmty</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://addcoder.com/posts/c919212f">https://addcoder.com/posts/c919212f</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="external nofollow noreferrer" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://addcoder.com" target="_blank">新码农</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Linux/">Linux</a></div><div class="post_share"><div class="social-share" data-image="/media/covers/No49%EF%BC%9ALinux%E7%9A%84buffer-cache%E5%86%85%E5%AD%98%E5%8D%A0%E7%94%A8%E8%BF%87%E9%AB%98.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i>赞助</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="/static/images/paywx.jpg" target="_blank"><img class="post-qr-code-img" src="/static/images/paywx.jpg" alt="微信"/></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="/static/images/payal.jpg" target="_blank"><img class="post-qr-code-img" src="/static/images/payal.jpg" alt="支付宝"/></a><div class="post-qr-code-desc">支付宝</div></li></ul></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/posts/d7720e0" title="No50：Linux查看服务器配置"><img class="cover" src="/media/covers/No50%EF%BC%9ALinux%E6%9F%A5%E7%9C%8B%E6%9C%8D%E5%8A%A1%E5%99%A8%E9%85%8D%E7%BD%AE.jpg" onerror="onerror=null;src='/static/images/404_img.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">No50：Linux查看服务器配置</div></div></a></div><div class="next-post pull-right"><a href="/posts/fd2f07b4" title="No48：Mac必备工具之brew"><img class="cover" src="/media/covers/No48%EF%BC%9AMac%E5%BF%85%E5%A4%87%E5%B7%A5%E5%85%B7%E4%B9%8Bbrew.jpg" onerror="onerror=null;src='/static/images/404_img.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">No48：Mac必备工具之brew</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><div><a href="/posts/69d551fe" title="No107：Screen命令详解"><img class="cover" src="/media/covers/No107%EF%BC%9AScreen%E5%91%BD%E4%BB%A4%E8%AF%A6%E8%A7%A3.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2023-06-10</div><div class="title">No107：Screen命令详解</div></div></a></div><div><a href="/posts/bea49731" title="No108：Nohup命令详解"><img class="cover" src="/media/covers/No108%EF%BC%9ANohup%E5%91%BD%E4%BB%A4%E8%AF%A6%E8%A7%A3.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2023-06-20</div><div class="title">No108：Nohup命令详解</div></div></a></div><div><a href="/posts/8ced7f6a" title="No109：连接云服务器时用root用户登陆"><img class="cover" src="/media/covers/No109%EF%BC%9A%E8%BF%9E%E6%8E%A5%E4%BA%91%E6%9C%8D%E5%8A%A1%E5%99%A8%E6%97%B6%E7%94%A8root%E7%94%A8%E6%88%B7%E7%99%BB%E9%99%86.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2023-07-10</div><div class="title">No109：连接云服务器时用root用户登陆</div></div></a></div><div><a href="/posts/f89f278d" title="No113：Python虚拟环境-Ubuntu16.04"><img class="cover" src="/media/covers/No113%EF%BC%9APython%E8%99%9A%E6%8B%9F%E7%8E%AF%E5%A2%83-Ubuntu16.04.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2023-09-10</div><div class="title">No113：Python虚拟环境-Ubuntu16.04</div></div></a></div><div><a href="/posts/3a8171b5" title="No112：Python虚拟环境-Centos7"><img class="cover" src="/media/covers/No112%EF%BC%9APython%E8%99%9A%E6%8B%9F%E7%8E%AF%E5%A2%83-Centos7.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2023-08-20</div><div class="title">No112：Python虚拟环境-Centos7</div></div></a></div><div><a href="/posts/46ab0914" title="No119：Linux常用解压缩命令"><img class="cover" src="/media/covers/No119%EF%BC%9ALinux%E5%B8%B8%E7%94%A8%E8%A7%A3%E5%8E%8B%E7%BC%A9%E5%91%BD%E4%BB%A4.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2023-12-10</div><div class="title">No119：Linux常用解压缩命令</div></div></a></div></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="waline-wrap"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src="/static/images/favicon.ico" onerror="this.onerror=null;this.src='/static/images/404_friend.gif'" alt="avatar"/></div><div class="author-info__name">Gilmty</div><div class="author-info__description">记录生活点滴，分享学习心得</div></div><div class="card-info-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">126</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">25</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">3</div></a></div><a id="card-info-btn" target="_blank" rel="noopener external nofollow noreferrer" href="https://github.com/guoxianru"><i class="fab fa-github"></i><span>GitHub</span></a><div class="card-info-social-icons is-center"><a class="social-icon" href="https://addcoder.com/atom.xml" target="_blank" title="Sitemap"><i class="fa-solid fa-rss" style="color: #24292e;"></i></a><a class="social-icon" href="https://addcoder.com/sitemap.xml" target="_blank" title="RSS"><i class="fa-solid fa-sitemap" style="color: #24292e;"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">新码农博客，记录生活点滴，分享学习心得。</div></div><div class="sticky_layout"><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/posts/7bc3db82" title="No126：NAS群晖DS218+使用笔记"><img src="/media/covers/No126%EF%BC%9ANAS%E7%BE%A4%E6%99%96DS218+%E4%BD%BF%E7%94%A8%E7%AC%94%E8%AE%B0.jpg" onerror="this.onerror=null;this.src='/static/images/404_img.jpg'" alt="No126：NAS群晖DS218+使用笔记"/></a><div class="content"><a class="title" href="/posts/7bc3db82" title="No126：NAS群晖DS218+使用笔记">No126：NAS群晖DS218+使用笔记</a><time datetime="2024-10-27T16:00:00.000Z" title="更新于 2024-10-28 00:00:00">2024-10-28</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/posts/6bc6db42" title="No125：Git仓库初始化"><img src="/media/covers/No125%EF%BC%9AGit%E4%BB%93%E5%BA%93%E5%88%9D%E5%A7%8B%E5%8C%96.jpg" onerror="this.onerror=null;this.src='/static/images/404_img.jpg'" alt="No125：Git仓库初始化"/></a><div class="content"><a class="title" href="/posts/6bc6db42" title="No125：Git仓库初始化">No125：Git仓库初始化</a><time datetime="2024-03-09T16:00:00.000Z" title="更新于 2024-03-10 00:00:00">2024-03-10</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/posts/35a10144" title="No124：抖音、douyin、signature、ac_signature、X-Bogus、a_bogus"><img src="/media/covers/No124%EF%BC%9A%E6%8A%96%E9%9F%B3%E3%80%81douyin%E3%80%81signature%E3%80%81ac_signature%E3%80%81X-Bogus%E3%80%81a_bogus.jpg" onerror="this.onerror=null;this.src='/static/images/404_img.jpg'" alt="No124：抖音、douyin、signature、ac_signature、X-Bogus、a_bogus"/></a><div class="content"><a class="title" href="/posts/35a10144" title="No124：抖音、douyin、signature、ac_signature、X-Bogus、a_bogus">No124：抖音、douyin、signature、ac_signature、X-Bogus、a_bogus</a><time datetime="2024-02-19T16:00:00.000Z" title="更新于 2024-02-20 00:00:00">2024-02-20</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/posts/630217ad" title="No123：得物、dewu、newSign"><img src="/media/covers/No123%EF%BC%9A%E5%BE%97%E7%89%A9%E3%80%81dewu%E3%80%81newSign.jpg" onerror="this.onerror=null;this.src='/static/images/404_img.jpg'" alt="No123：得物、dewu、newSign"/></a><div class="content"><a class="title" href="/posts/630217ad" title="No123：得物、dewu、newSign">No123：得物、dewu、newSign</a><time datetime="2024-02-09T16:00:00.000Z" title="更新于 2024-02-10 00:00:00">2024-02-10</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/posts/5341eae6" title="No122：哔哩哔哩、bilibili、w_rid、qv_id"><img src="/media/covers/No122%EF%BC%9A%E5%93%94%E5%93%A9%E5%93%94%E5%93%A9%E3%80%81bilibili%E3%80%81w_rid%E3%80%81qv_id.jpg" onerror="this.onerror=null;this.src='/static/images/404_img.jpg'" alt="No122：哔哩哔哩、bilibili、w_rid、qv_id"/></a><div class="content"><a class="title" href="/posts/5341eae6" title="No122：哔哩哔哩、bilibili、w_rid、qv_id">No122：哔哩哔哩、bilibili、w_rid、qv_id</a><time datetime="2024-01-19T16:00:00.000Z" title="更新于 2024-01-20 00:00:00">2024-01-20</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/posts/762f934c" title="No121：宝宝树、babytree、secret、signature"><img src="/media/covers/No121%EF%BC%9A%E5%AE%9D%E5%AE%9D%E6%A0%91%E3%80%81babytree%E3%80%81secret%E3%80%81signature.jpg" onerror="this.onerror=null;this.src='/static/images/404_img.jpg'" alt="No121：宝宝树、babytree、secret、signature"/></a><div class="content"><a class="title" href="/posts/762f934c" title="No121：宝宝树、babytree、secret、signature">No121：宝宝树、babytree、secret、signature</a><time datetime="2024-01-09T16:00:00.000Z" title="更新于 2024-01-10 00:00:00">2024-01-10</time></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2019 - 2026 By Gilmty</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener external nofollow noreferrer" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener external nofollow noreferrer" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div><div class="footer_custom_text">欢迎来到 <a href="https://addcoder.com">新码农</a> !</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">繁</button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><div class="js-pjax"><script>(() => {
+  const abcjsInit = () => {
+    const abcjsFn = () => {
+      document.querySelectorAll(".abc-music-sheet").forEach(ele => {
+        ABCJS.renderAbc(ele, ele.innerHTML, {responsive: 'resize'})
+      })
+    }
+    
+    typeof ABCJS === 'object' ? abcjsFn()
+      : getScript('https://cdn.jsdelivr.net/npm/abcjs/dist/abcjs-basic-min.min.js').then(abcjsFn)
+  }
+
+  window.pjax ? abcjsInit() : window.addEventListener('load', abcjsInit)
+})()</script><script>(() => {
+  const initWaline = () => {
+    const waline = Waline.init(Object.assign({
+      el: '#waline-wrap',
+      serverURL: 'https://pl.addcoder.com',
+      pageview: false,
+      dark: 'html[data-theme="dark"]',
+      path: window.location.pathname,
+      comment: false,
+    }, null))
+  }
+
+  const loadWaline = async () => {
+    if (typeof Waline === 'object') initWaline()
+    else {
+      await getCSS('https://unpkg.com/@waline/client@v2/dist/waline.css')
+      await getScript('https://unpkg.com/@waline/client@v2/dist/waline.js')
+      initWaline()
+    }
+  }
+
+  if ('Waline' === 'Waline' || !true) {
+    if (true) btf.loadComment(document.getElementById('waline-wrap'),loadWaline)
+    else setTimeout(loadWaline, 0)
+  } else {
+    window.loadOtherComment = loadWaline
+  }
+})()</script></div><script src="/static/js/jquery.js"></script><script src="/static/js/foot.js"></script><script defer="defer" id="fluttering_ribbon" mobile="true" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/canvas-fluttering-ribbon.min.js"></script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><span id="loading-status"></span><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="is-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据库加载中</span></div><div class="search-wrap"><div id="local-search-input"><div class="local-search-box"><input class="local-search-box--input" placeholder="搜索文章" type="text"/></div></div><hr/><div id="local-search-results"></div><div id="local-search-stats-wrap"></div></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

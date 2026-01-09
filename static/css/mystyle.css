@@ -1,0 +1,48 @@
+/*页脚*/
+#footer {
+    background-color: rgb(128, 128, 128);
+}
+
+/*导航栏常驻*/
+#nav {
+    transition: none !important;
+    -webkit-transition: none !important;
+    -moz-transition: none !important;
+    -ms-transition: none !important;
+    -o-transition: none !important;
+}
+
+/*首页文章封面，保持原有尺寸比例，内容被缩放*/
+.recent-posts .recent-post-item a img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+}
+
+/*文章列表封面，保持原有尺寸比例，内容被缩放*/
+.article-sort .article-sort-item a img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+}
+
+/*最新文章封面，保持原有尺寸比例，内容被缩放*/
+.aside-content .aside-list-item a img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+}
+
+/*相关推荐封面，保持原有尺寸比例，内容被缩放*/
+.relatedPosts-list div a img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+}
+
+/*上下翻页封面，保持原有尺寸比例，内容被缩放*/
+.pagination-post div a img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+}
