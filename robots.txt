@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+Allow: /categories/
+Allow: /tags/
+Allow: /link/
+Allow: /archives/
+
+Disallow: /js/
+Disallow: /css/
+Disallow: /static/
+Disallow: /media/
+
+Sitemap: https://addcoder.com/sitemap.xml
+Sitemap: https://addcoder.com/baidusitemap.xml
